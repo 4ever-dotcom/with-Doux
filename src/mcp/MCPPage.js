@@ -1,5 +1,5 @@
 /**
- * MCP 管理页面组件
+ * MCP 管理页面组件（HTTP 版本）
  */
 import { mcpManager } from './MCPManager.js';
 
@@ -10,7 +10,7 @@ export function renderMCPPage() {
     <div class="mcp-page">
       <div class="mcp-header">
         <h1>MCP 服务器</h1>
-        <p>管理和配置 Model Context Protocol 服务器</p>
+        <p>管理和配置 Model Context Protocol 服务器（HTTP）</p>
       </div>
       
       <div class="mcp-content">
@@ -67,7 +67,10 @@ function renderServerList() {
       </div>
       
       <div class="server-details">
-        <div class="server-command">${server.command} ${server.args.join(' ')}</div>
+        <div class="server-command">
+          <strong>URL:</strong> ${server.baseUrl}
+          ${server.token ? '<br><strong>Token:</strong> 已配置' : ''}
+        </div>
         
         ${server.connected && server.toolCount > 0 ? `
           <details class="server-tools">
@@ -170,26 +173,20 @@ function showAddServerModal() {
         <form id="add-server-form">
           <div class="form-group">
             <label>名称 *</label>
-            <input type="text" name="name" required placeholder="例如: filesystem">
+            <input type="text" name="name" required placeholder="例如: my-mcp-server">
             <div class="form-hint">服务器的唯一标识</div>
           </div>
           
           <div class="form-group">
-            <label>命令 *</label>
-            <input type="text" name="command" required placeholder="例如: npx">
-            <div class="form-hint">启动服务器的可执行文件</div>
+            <label>Base URL *</label>
+            <input type="url" name="baseUrl" required placeholder="例如: http://localhost:3000/mcp">
+            <div class="form-hint">MCP HTTP 端点地址</div>
           </div>
           
           <div class="form-group">
-            <label>参数</label>
-            <input type="text" name="args" placeholder="例如: -y @modelcontextprotocol/server-filesystem /path">
-            <div class="form-hint">命令行参数，用空格分隔</div>
-          </div>
-          
-          <div class="form-group">
-            <label>环境变量 (JSON)</label>
-            <textarea name="env" placeholder='{"KEY": "value"}'>{}</textarea>
-            <div class="form-hint">可选的环境变量，JSON 格式</div>
+            <label>Token（可选）</label>
+            <input type="password" name="token" placeholder="Bearer token">
+            <div class="form-hint">如果服务器需要认证，填写 token</div>
           </div>
         </form>
       </div>
@@ -223,9 +220,8 @@ function showAddServerModal() {
     try {
       const config = {
         name: formData.get('name').trim(),
-        command: formData.get('command').trim(),
-        args: formData.get('args').trim().split(/\s+/).filter(Boolean),
-        env: JSON.parse(formData.get('env') || '{}'),
+        baseUrl: formData.get('baseUrl').trim(),
+        token: formData.get('token').trim(),
         enabled: true
       };
       
