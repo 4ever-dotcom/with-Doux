@@ -1,5 +1,5 @@
 /**
- * MCP Manager - 管理多个 MCP 客户端
+ * MCP Manager - 管理多个 MCP 客户端（HTTP 版本）
  */
 import { MCPClient } from './MCPClient.js';
 
@@ -34,9 +34,8 @@ export class MCPManager {
     try {
       const configs = Array.from(this.clients.values()).map(client => ({
         name: client.name,
-        command: client.command,
-        args: client.args,
-        env: client.env,
+        baseUrl: client.baseUrl,
+        token: client.token,
         enabled: client.enabled
       }));
       localStorage.setItem('mcp_servers', JSON.stringify(configs));
@@ -90,9 +89,8 @@ export class MCPManager {
     // 更新配置
     Object.assign(client, {
       name: newConfig.name || client.name,
-      command: newConfig.command || client.command,
-      args: newConfig.args || client.args,
-      env: newConfig.env || client.env,
+      baseUrl: newConfig.baseUrl || client.baseUrl,
+      token: newConfig.token !== undefined ? newConfig.token : client.token,
       enabled: newConfig.enabled !== undefined ? newConfig.enabled : client.enabled
     });
 
@@ -108,7 +106,7 @@ export class MCPManager {
   /**
    * 启用/禁用服务器
    */
-  setServerEnabled(name, enabled) {
+  async setServerEnabled(name, enabled) {
     const client = this.clients.get(name);
     if (!client) {
       throw new Error(`Server not found: ${name}`);
@@ -117,7 +115,7 @@ export class MCPManager {
     client.enabled = enabled;
     
     if (enabled && !client.connected) {
-      return client.connect();
+      await client.connect();
     } else if (!enabled && client.connected) {
       client.disconnect();
     }
@@ -193,9 +191,8 @@ export class MCPManager {
   getServers() {
     return Array.from(this.clients.values()).map(client => ({
       name: client.name,
-      command: client.command,
-      args: client.args,
-      env: client.env,
+      baseUrl: client.baseUrl,
+      token: client.token ? '***' : '', // 隐藏 token
       enabled: client.enabled,
       connected: client.connected,
       toolCount: client.tools.length
