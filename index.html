@@ -76,20 +76,6 @@
   .hdr-subtitle{font-size:12px;color:var(--text2)}
   .user-name{font-size:14px;font-weight:600;margin-bottom:4px}
   .user-sub{font-size:12px;color:var(--text2)}
-  
-  /* LOCK */
-  .lock{position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:60px 20px 40px}
-  .lock.hidden{display:none}
-  .lock-time{font-size:72px;font-weight:300;letter-spacing:-2px}
-  .lock-date{font-size:16px;color:var(--text2);margin-top:8px}
-  .lock-slider{width:280px;height:60px;background:var(--card);border-radius:30px;position:relative;overflow:hidden}
-  .lock-track{position:absolute;left:0;top:0;bottom:0;background:var(--accent-soft);width:0;transition:width .1s}
-  .lock-handle{position:absolute;left:4px;top:4px;width:52px;height:52px;background:var(--accent);border-radius:50%;cursor:grab;display:flex;align-items:center;justify-content:center;touch-action:none}
-  .lock-handle:active{cursor:grabbing}
-  .lock-handle svg{width:24px;height:24px;stroke:#fff;stroke-width:2;fill:none}
-  .lock-text{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:14px;color:var(--text2);pointer-events:none}
-  
-  /* MCP styles placeholder */
   </style>
   
   <!-- MCP 接入 -->
@@ -101,22 +87,7 @@
 </head>
 <body>
   
-  <!-- LOCK -->
-  <div class="lock" id="lock">
-    <div>
-      <div class="lock-time" id="lockTime">00:00</div>
-      <div class="lock-date" id="lockDate">2026年1月1日 星期一</div>
-    </div>
-    <div class="lock-slider" id="lockSlider">
-      <div class="lock-track" id="lockTrack"></div>
-      <div class="lock-handle" id="lockHandle">
-        <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </div>
-      <div class="lock-text">滑动解锁</div>
-    </div>
-  </div>
-  
-  <!-- APP -->
+  <!-- APP (锁屏已移除) -->
   <div class="app">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <div class="sidebar" id="sidebar">
@@ -197,47 +168,6 @@
   
   <script type="module">
     import { renderMCPPage } from './src/mcp/MCPPage.js';
-    
-    // Lock Screen
-    const lock = document.getElementById('lock');
-    const lockTime = document.getElementById('lockTime');
-    const lockDate = document.getElementById('lockDate');
-    const lockSlider = document.getElementById('lockSlider');
-    const lockHandle = document.getElementById('lockHandle');
-    const lockTrack = document.getElementById('lockTrack');
-    
-    function updateLockTime() {
-      const now = new Date();
-      lockTime.textContent = now.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
-      const weekdays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-      lockDate.textContent = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${weekdays[now.getDay()]}`;
-    }
-    updateLockTime();
-    setInterval(updateLockTime, 1000);
-    
-    let startX = 0, currentX = 0;
-    const maxSlide = lockSlider.offsetWidth - lockHandle.offsetWidth - 8;
-    
-    lockHandle.addEventListener('touchstart', (e) => {
-      startX = e.touches[0].clientX;
-      currentX = 0;
-    });
-    
-    lockHandle.addEventListener('touchmove', (e) => {
-      const touch = e.touches[0];
-      currentX = Math.max(0, Math.min(maxSlide, touch.clientX - startX));
-      lockHandle.style.left = `${4 + currentX}px`;
-      lockTrack.style.width = `${currentX}px`;
-    });
-    
-    lockHandle.addEventListener('touchend', () => {
-      if (currentX > maxSlide * 0.8) {
-        lock.classList.add('hidden');
-      } else {
-        lockHandle.style.left = '4px';
-        lockTrack.style.width = '0';
-      }
-    });
     
     // Sidebar
     const sidebar = document.getElementById('sidebar');
