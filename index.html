@@ -1,330 +1,366 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Doux</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{
-  --bg:#F6F1EC;--bg2:#EFEBE6;--bg3:#E8E3DD;
-  --card:#EFEBE6;--card-hover:#E8E3DD;
-  --bubble-user:#3A3632;--bubble-ai:#EFEBE6;
-  --text:#2C2824;--text2:#6B6560;--text3:#9A948E;
-  --on-dark:#F6F1EC;
-  --accent:#C4654A;--accent-hover:#B85A42;--accent-soft:#D4917E;
-  --border:#E2DDD7;--border2:#D6D0CA;
-  --radius:16px;--radius-sm:10px;--radius-xs:6px;
-  --font-s:'Playfair Display',Georgia,serif;
-  --font:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  --safe-t:env(safe-area-inset-top,0px);
-  --safe-b:env(safe-area-inset-bottom,0px);
-}
-html,body{height:100%;width:100%;font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden;font-size:15px;line-height:1.5}
-button{font-family:inherit;cursor:pointer}
-input,textarea,select{font-family:inherit}
-
-.app{height:100%;width:100%;display:flex;position:relative;overflow:hidden}
-
-/* SIDEBAR */
-.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:100;opacity:0;pointer-events:none;transition:opacity .3s}
-.sidebar-overlay.on{opacity:1;pointer-events:auto}
-.sidebar{position:fixed;left:0;top:0;bottom:0;width:280px;background:var(--bg);z-index:101;transform:translateX(-100%);transition:transform .35s cubic-bezier(.32,.72,0,1);display:flex;flex-direction:column;overflow:hidden}
-.sidebar.on{transform:translateX(0)}
-.sb-top{padding:52px 20px 16px;flex-shrink:0}
-.sb-brand{font-family:var(--font-s);font-size:28px;font-weight:700;letter-spacing:-.5px}
-.sb-nav{flex:1;overflow-y:auto;padding:0 8px 8px;-webkit-overflow-scrolling:touch}
-.sb-item{display:flex;align-items:center;gap:14px;padding:11px 14px;border-radius:var(--radius-sm);font-size:15px;color:var(--text);cursor:pointer;transition:background .15s;border:none;background:none;width:100%;text-align:left}
-.sb-item:hover,.sb-item.active{background:var(--card)}
-.sb-item svg{width:20px;height:20px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.sb-sep{font-size:11px;color:var(--text3);padding:18px 14px 6px;font-weight:600;text-transform:uppercase;letter-spacing:.8px}
-.sb-recent{padding:9px 14px;font-size:14px;color:var(--text2);cursor:pointer;border-radius:var(--radius-xs);transition:background .15s}
-.sb-recent:hover{background:var(--card)}
-.sb-bottom{padding:12px 20px;border-top:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:10px}
-.sb-avatar-wrap{position:relative;cursor:pointer}
-.sb-avatar{width:36px;height:36px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;overflow:hidden}
-.sb-avatar img{width:100%;height:100%;object-fit:cover}
-.sb-user-name{font-size:14px;font-weight:500}
-.sb-user-sub{font-size:12px;color:var(--text3)}
-
-/* PAGES */
-.page{display:none;flex-direction:column;height:100%;width:100%;min-width:0}
-.page.active{display:flex}
-
-/* HEADER */
-.hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;padding-top:max(10px,var(--safe-t));flex-shrink:0;position:relative;z-index:10}
-.hdr-btn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:none;background:none;border-radius:50%;transition:background .15s;color:var(--text)}
-.hdr-btn:hover{background:var(--card)}
-.hdr-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.hdr-center{position:absolute;left:50%;transform:translateX(-50%);text-align:center;pointer-events:none}
-.hdr-title{font-family:var(--font-s);font-size:17px;font-weight:600;letter-spacing:-.3px}
-
-/* CHAT */
-.chat-area{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 16px 16px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
-.chat-area::-webkit-scrollbar{width:0}
-
-.msg{margin-bottom:10px;display:flex;align-items:flex-start;gap:8px;animation:msgIn .35s cubic-bezier(.32,.72,0,1)}
-@keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.msg.ai{justify-content:flex-start}
-.msg.user{justify-content:flex-end}
-
-.msg-avatar{width:32px;height:32px;border-radius:50%;flex-shrink:0;overflow:hidden;background:var(--card);display:flex;align-items:center;justify-content:center;margin-top:4px}
-.msg-avatar img{width:100%;height:100%;object-fit:cover}
-.msg-avatar.placeholder{font-size:12px;font-weight:600;color:var(--text2)}
-
-.msg-content{max-width:78%;display:flex;flex-direction:column;gap:2px}
-
-.msg-bubble{padding:10px 14px;border-radius:18px;font-size:15px;line-height:1.55;word-break:break-word;white-space:pre-wrap}
-.msg.ai .msg-bubble{background:var(--bubble-ai);color:var(--text);border-bottom-left-radius:6px}
-.msg.user .msg-bubble{background:var(--bubble-user);color:var(--on-dark);border-bottom-right-radius:6px}
-
-.msg.ai .msg-bubble.streaming::after{content:'';display:inline-block;width:2px;height:16px;background:var(--accent);margin-left:2px;vertical-align:text-bottom;animation:blink .6s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-
-.thought-toggle{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text3);cursor:pointer;padding:4px 0;margin-bottom:4px;background:none;border:none;transition:color .15s}
-.thought-toggle:hover{color:var(--text2)}
-.thought-toggle svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;transition:transform .2s}
-.thought-toggle.open svg{transform:rotate(90deg)}
-.thought-body{display:none;font-size:13px;color:var(--text2);padding:6px 0 8px;line-height:1.6;border-left:2px solid var(--border);padding-left:12px;margin-bottom:6px}
-.thought-body.open{display:block}
-
-/* INPUT */
-.input-area{flex-shrink:0;padding:6px 12px;padding-bottom:max(10px,var(--safe-b))}
-.input-box{display:flex;align-items:flex-end;background:var(--card);border-radius:22px;padding:4px 4px 4px 14px;gap:6px;transition:box-shadow .2s}
-.input-box:focus-within{box-shadow:0 0 0 2px var(--border2)}
-.input-field{flex:1;border:none;background:none;outline:none;font-size:15px;color:var(--text);padding:9px 0;resize:none;max-height:120px;line-height:1.4;min-height:22px}
-.input-field::placeholder{color:var(--text3)}
-.btn-send{width:36px;height:36px;border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .15s;background:var(--accent);color:#fff;flex-shrink:0;margin-bottom:3px}
-.btn-send:hover{background:var(--accent-hover)}
-.btn-send:disabled{background:var(--border);color:var(--text3);cursor:default}
-.btn-send svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-
-/* SHEETS */
-.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s}
-.sheet-bg.on{opacity:1;pointer-events:auto}
-.sheet{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-radius:20px 20px 0 0;z-index:201;transform:translateY(100%);transition:transform .4s cubic-bezier(.32,.72,0,1);max-height:85vh;display:flex;flex-direction:column;padding-bottom:var(--safe-b)}
-.sheet.on{transform:translateY(0)}
-.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:10px auto 0;flex-shrink:0}
-.sh-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 10px;flex-shrink:0}
-.sh-title{font-family:var(--font-s);font-size:18px;font-weight:600;flex:1;text-align:center}
-.sh-close{width:30px;height:30px;border:none;background:none;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--text);transition:background .15s}
-.sh-close:hover{background:var(--card)}
-.sh-close svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
-.sh-body{flex:1;overflow-y:auto;padding:0 20px 20px;-webkit-overflow-scrolling:touch}
-
-.cfg-group{margin-bottom:16px}
-.cfg-label{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px;display:block}
-.cfg-input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);font-size:14px;color:var(--text);outline:none;transition:border-color .15s}
-.cfg-input:focus{border-color:var(--accent)}
-.cfg-input::placeholder{color:var(--text3)}
-.cfg-hint{font-size:11px;color:var(--text3);margin-top:4px}
-.cfg-btn{width:100%;padding:12px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:#fff;font-size:15px;font-weight:500;transition:background .15s;margin-top:8px}
-.cfg-btn:hover{background:var(--accent-hover)}
-
-.cfg-model-select{margin-top:12px;padding:14px;background:var(--card);border-radius:var(--radius-sm);border:1px solid var(--border)}
-.cfg-model-select label{font-size:13px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px}
-.cfg-model-select select{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:14px;color:var(--text);outline:none}
-.cfg-model-select select:focus{border-color:var(--accent)}
-
-/* PLACEHOLDERS */
-.page-placeholder{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--text3);padding:40px}
-.page-placeholder svg{width:48px;height:48px;stroke:var(--border2);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-.page-placeholder h2{font-family:var(--font-s);font-size:20px;color:var(--text2);font-weight:600}
-.page-placeholder p{font-size:14px;text-align:center;max-width:260px}
-
-/* LOCK */
-.lock{position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .6s,transform .6s cubic-bezier(.32,.72,0,1)}
-.lock.gone{opacity:0;transform:scale(1.05);pointer-events:none}
-.lock-time{font-family:var(--font-s);font-size:64px;font-weight:300;letter-spacing:-2px}
-.lock-date{font-size:14px;color:var(--text3);margin-top:-6px}
-.lock-art{width:140px;height:140px;margin:16px 0}
-.lock-art svg{width:100%;height:100%}
-.lock-msg{font-family:var(--font-s);font-size:22px}
-.slider{display:flex;align-items:center;background:var(--card);border-radius:30px;padding:6px;width:260px;margin-top:24px;position:relative;overflow:hidden;user-select:none;-webkit-user-select:none}
-.slider-thumb{width:48px;height:48px;border-radius:50%;background:var(--bubble-user);display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1;touch-action:none}
-.slider-thumb svg{width:18px;height:18px}
-.slider-label{flex:1;text-align:center;font-size:15px;color:var(--text3);pointer-events:none;animation:pulse 2s ease-in-out infinite alternate}
-@keyframes pulse{from{opacity:.5}to{opacity:1}}
-
-*:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
-
-@media(min-width:900px){
-  .sidebar{transform:translateX(0);position:relative;flex-shrink:0}
-  .sidebar-overlay{display:none}
-  .menu-btn{display:none}
-  .msg-content{max-width:60%}
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Doux</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    :root{
+      --hg:#fefefe;--hg2:#efefec;--hg3:#e8e3d0;
+      --ca:#d3#fefebe;--card-hover:#efe3d0;
+      --tx:#2c2a24;--tx2:#605d58;--text3:#9a9a8e;
+      --or-dark:#f35f3a;
+      --ac:#c05aa7;--accent-hover:#b65aa2;--accent-soft:#d497e;
+      --border:#d5d0ca;--border-light:#e0dcca;
+      --radius:16px;--radius-sm:10px;--radius-xs:5px;
+      --font-s:'Playfair Display',Georgia,serif;
+      --font-inter:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      --safe-b:env(safe-area-inset-bottom,0px);
+      --safe-t:env(safe-area-inset-top,0px);
+    }
+    html,body{height:100%;width:100%;font-family:var(--font-i);background:var(--bg);color:var(--text);overflow:hidden;font-size:16px}
+    input,textarea,select{font-family:inherit}
+    body{display:flex;flex-direction:column;position:relative;overflow:hidden}
+    *{margin:0;padding:0;box-sizing:border-box}
+    .app{height:100%;width:100%;display:flex;position:relative;overflow:hidden}
+    .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:100;opacity:0;pointer-events:none;transition:opacity .3s}
+    .sidebar-overlay.active{opacity:1;pointer-events:auto}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:240px;background:var(--card);z-index:101;transform:translateX(-100%);transition:transform .3s}
+    .sidebar.active{transform:translateX(0)}
+    .sidebar-top{padding:52px 20px 16px;flex:0 0 auto}
+    .sidebar-nav{flex:1;overflow-y:auto;padding:0 8px}
+    .sb-item{padding:14px 16px;font-size:16px;color:var(--text);background:none;border:none;width:100%;text-align:left;border-radius:var(--radius-sm);cursor:pointer;display:flex;align-items:center;gap:12px;font-weight:500;transition:background .2s}
+    .sb-item:hover{background:var(--card-hover)}
+    .sb-item.active{background:var(--accent-soft);color:var(--accent)}
+    .sb-bottom{padding:12px 20px 16px;border-top:1px solid var(--border)}
+    .sb-user{width:40px;height:40px;border-radius:50%;background:var(--card);object-fit:cover}
+    .hdr{width:100%;height:36px;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;padding-top:max(10px,var(--safe-t));background:var(--bg);border:none;z-index:10}
+    .hdr-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;background:none;border-radius:var(--radius);cursor:pointer;transition:background .2s}
+    .hdr-btn:hover{background:var(--card)}
+    .hdr-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .hdr-title{font-family:var(--font-s);font-size:18px;font-weight:600;letter-spacing:-.5px}
+  
+  /* PAGES */
+  .page{display:none;flex-direction:column;height:100%;width:100%;min-width:0;padding:0}
+  .page.active{display:flex}
+  .page-wrapper{overflow:auto;-webkit-overflow-scrolling:touch}
+  
+  /* CHAT */
+  .chat-area{flex:1;overflow-y:auto;padding:6px 16px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+  .chat-area.loading{overflow:hidden}
+  .chat-msg{margin-bottom:16px;display:flex;gap:12px}
+  .chat-msg.user{flex-direction:row-reverse}
+  .chat-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--card);cursor:pointer}
+  .chat-avatar svg{width:22px;height:22px;stroke:currentColor;stroke-width:2;fill:none}
+  .chat-bubble{padding:12px 16px;border-radius:16px;max-width:75%;word-wrap:break-word}
+  .chat-msg.user .chat-bubble{background:var(--or-dark);color:#fff}
+  .chat-msg:not(.user) .chat-bubble{background:var(--card)}
+  .chat-msg code{background:rgba(0,0,0,.08);padding:2px 6px;border-radius:4px;font-size:14px}
+  .chat-msg pre{background:rgba(0,0,0,.06);padding:12px;border-radius:8px;overflow-x:auto;margin:8px 0}
+  .chat-msg pre code{background:none;padding:0}
+  .typing-cursor{display:inline-block;width:2px;height:1em;background:currentColor;margin-left:2px;animation:blink 1s step-end infinite}
+  @keyframes blink{50%{opacity:0}}
+  .chat-bottom{padding:12px 20px;border-top:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:10px;padding-bottom:max(12px,var(--safe-b))}
+  .chat-input{flex:1;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);font-size:16px;resize:none;max-height:100px;font-family:inherit}
+  .chat-send{width:44px;height:44px;border-radius:50%;background:var(--accent);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s}
+  .chat-send:hover{background:var(--accent-hover)}
+  .chat-send svg{width:20px;height:20px;stroke:#fff;stroke-width:2;fill:none}
+  .avatar-picker{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+  .avatar-picker.show{display:flex}
+  .avatar-panel{background:var(--card);border-radius:var(--radius);padding:24px;max-width:400px;width:100%}
+  .avatar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+  .avatar-option{width:100%;aspect-ratio:1;border-radius:50%;object-fit:cover;cursor:pointer;border:2px solid transparent;transition:border .2s}
+  .avatar-option:hover{border-color:var(--accent)}
+  .sb-sep{font-size:11px;text-transform:uppercase;color:var(--text2);padding:16px 12px 8px;font-weight:600;letter-spacing:.8px}
+  .hdr-subtitle{font-size:12px;color:var(--text2)}
+  .user-name{font-size:14px;font-weight:600;margin-bottom:4px}
+  .user-sub{font-size:12px;color:var(--text2)}
+  
+  /* LOCK */
+  .lock{position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:60px 20px 40px}
+  .lock.hidden{display:none}
+  .lock-time{font-size:72px;font-weight:300;letter-spacing:-2px}
+  .lock-date{font-size:16px;color:var(--text2);margin-top:8px}
+  .lock-slider{width:280px;height:60px;background:var(--card);border-radius:30px;position:relative;overflow:hidden}
+  .lock-track{position:absolute;left:0;top:0;bottom:0;background:var(--accent-soft);width:0;transition:width .1s}
+  .lock-handle{position:absolute;left:4px;top:4px;width:52px;height:52px;background:var(--accent);border-radius:50%;cursor:grab;display:flex;align-items:center;justify-content:center;touch-action:none}
+  .lock-handle:active{cursor:grabbing}
+  .lock-handle svg{width:24px;height:24px;stroke:#fff;stroke-width:2;fill:none}
+  .lock-text{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:14px;color:var(--text2);pointer-events:none}
+  
+  /* MCP styles placeholder */
+  </style>
+  
+  <!-- MCP 接入 -->
+  <link rel="stylesheet" href="src/styles/mcp.css">
+  <script type="module" src="src/mcp/MCPClient.js"></script>
+  <script type="module" src="src/mcp/MCPManager.js"></script>
+  <script type="module" src="src/mcp/MCPPage.js"></script>
+  
 </head>
 <body>
-
-<div class="app">
-<div class="sidebar-overlay" id="sbOv"></div>
-<nav class="sidebar" id="sb">
-  <div class="sb-top"><div class="sb-brand">Doux</div></div>
-  <div class="sb-nav">
-    <button class="sb-item active" data-page="chat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>聊天</button>
-    <button class="sb-item" data-page="todo"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>待办</button>
-    <button class="sb-item" data-page="calendar"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>日历</button>
-    <button class="sb-item" data-page="diary"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg>日记</button>
-    <button class="sb-item" data-page="moments"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10A15.3 15.3 0 0112 2z"/></svg>朋友圈</button>
-    <button class="sb-item" data-page="reading"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>共读</button>
-    <button class="sb-item" data-page="daily"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>日报</button>
-    <button class="sb-item" data-page="health"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>健康</button>
-    <button class="sb-item" data-page="status"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>状态</button>
-    <button class="sb-item" data-page="workflow"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="6" height="5" rx="1"/><rect x="16" y="3" width="6" height="5" rx="1"/><rect x="9" y="16" width="6" height="5" rx="1"/><path d="M5 8v3a2 2 0 002 2h10a2 2 0 002-2V8"/><line x1="12" y1="13" x2="12" y2="16"/></svg>工作流</button>
-    <button class="sb-item" data-page="store"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>仓库</button>
-    <button class="sb-item" data-page="mcp"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>MCP</button>
-    <div class="sb-sep">Recents</div>
-    <div class="sb-recent">新对话</div>
-  </div>
-  <div class="sb-bottom">
-    <div class="sb-avatar-wrap" id="userAvatarWrap">
-      <div class="sb-avatar" id="userAvatarSb"><span>我</span></div>
+  
+  <!-- LOCK -->
+  <div class="lock" id="lock">
+    <div>
+      <div class="lock-time" id="lockTime">00:00</div>
+      <div class="lock-date" id="lockDate">2026年1月1日 星期一</div>
     </div>
-    <div><div class="sb-user-name">琦琦</div><div class="sb-user-sub">在线</div></div>
-  </div>
-</nav>
-
-<div class="page active" id="pg-chat">
-  <header class="hdr">
-    <button class="hdr-btn menu-btn" onclick="toggleSb()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-    <div class="hdr-center"><div class="hdr-title" id="chatTitle">Doux</div></div>
-    <button class="hdr-btn" onclick="openSheet('cfgSheet')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
-  </header>
-  <div class="chat-area" id="chatArea"></div>
-  <div class="input-area">
-    <div class="input-box">
-      <textarea class="input-field" id="inputField" placeholder="说点什么..." rows="1"></textarea>
-      <button class="btn-send" id="sendBtn" onclick="sendMsg()" disabled><svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5,12 12,5 19,12"/></svg></button>
+    <div class="lock-slider" id="lockSlider">
+      <div class="lock-track" id="lockTrack"></div>
+      <div class="lock-handle" id="lockHandle">
+        <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+      <div class="lock-text">滑动解锁</div>
     </div>
   </div>
-</div>
-
-<div class="page" id="pg-todo"><header class="hdr"><button class="hdr-btn menu-btn" onclick="toggleSb()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div class="hdr-center"><div class="hdr-title">待办</div></div><span style="width:38px"></span></header><div class="page-placeholder"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><h2>待办事项</h2><p>下个版本 🔨</p></div></div>
-<div class="page" id="pg-calendar"><header class="hdr"><button class="hdr-btn menu-btn" onclick="toggleSb()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div class="hdr-center"><div class="hdr-title">日历</div></div><span style="width:38px"></span></header><div class="page-placeholder"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><h2>日历</h2><p>下个版本 🔨</p></div></div>
-<div class="page" id="pg-diary"><header class="hdr"><button class="hdr-btn menu-btn" onclick="toggleSb()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div class="hdr-center"><div class="hdr-title">日记</div></div><span style="width:38px"></span></header><div class="page-placeholder"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg><h2>日记本</h2><p>下个版本 🔨</p></div></div>
-<div class="page" id="pg-moments"><header class="hdr"><button class="hdr-btn menu-btn" onclick="toggleSb()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div class="hdr-center"><div class="hdr-title">朋友圈</div></div><span style="width:38px"></span></header><div class="page-placeholder"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg><h2>朋友圈</h2><p>下个版本 🔨</p></div></div>
-<div class="page" id="pg-reading"><header class="hdr"><button class="hdr-btn menu-btn" onclick="toggleSb()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div class="hdr-center"><div class="hdr-title">共读</div></div><span style="width:38px"></span></header><div class="page-placeholder"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg><h2>共读</h2><p>下个版本 🔨</p></div></div>
-<div class="page" id="pg-daily"><header class="hdr"><button class="hdr-btn menu-btn" onclick="toggleSb()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div class="hdr-center"><div class="hdr-title">日报</div></div><span style="width:38px"></span></header><div class="page-placeholder"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg><h2>日报</h2><p>下个版本 🔨</p></div></div>
-<div class="page" id="pg-health"><header class="hdr"><button class="hdr-btn menu-btn" onclick="toggleSb()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div class="hdr-center"><div class="hdr-title">健康</div></div><span style="width:38px"></span></header><div class="page-placeholder"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><h2>健康</h2><p>Gadgetbridge 接入 · 下个版本 🔨</p></div></div>
-<div class="page" id="pg-status"><header class="hdr"><button class="hdr-btn menu-btn" onclick="toggleSb()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div class="hdr-center"><div class="hdr-title">状态</div></div><span style="width:38px"></span></header><div class="page-placeholder"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><h2>状态</h2><p>下个版本 🔨</p></div></div>
-<div class="page" id="pg-workflow"><header class="hdr"><button class="hdr-btn menu-btn" onclick="toggleSb()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div class="hdr-center"><div class="hdr-title">工作流</div></div><span style="width:38px"></span></header><div class="page-placeholder"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="6" height="5" rx="1"/><rect x="16" y="3" width="6" height="5" rx="1"/><rect x="9" y="16" width="6" height="5" rx="1"/><path d="M5 8v3a2 2 0 002 2h10a2 2 0 002-2V8"/><line x1="12" y1="13" x2="12" y2="16"/></svg><h2>工作流编辑器</h2><p>可视化拖拽 · 下个版本 🔨</p></div></div>
-<div class="page" id="pg-store"><header class="hdr"><button class="hdr-btn menu-btn" onclick="toggleSb()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div class="hdr-center"><div class="hdr-title">仓库</div></div><span style="width:38px"></span></header><div class="page-placeholder"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg><h2>仓库</h2><p>下个版本 🔨</p></div></div>
-<div class="page" id="pg-mcp"><header class="hdr"><button class="hdr-btn menu-btn" onclick="toggleSb()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div class="hdr-center"><div class="hdr-title">MCP</div></div><span style="width:38px"></span></header><div class="page-placeholder"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg><h2>MCP 服务</h2><p>HTTP/HTTPS · 下个版本 🔨</p></div></div>
-
-</div>
-
-<div class="sheet-bg" id="cfgBg" onclick="closeSheet('cfgSheet')"></div>
-<div class="sheet" id="cfgSheet">
-  <div class="sheet-handle"></div>
-  <div class="sh-hdr">
-    <button class="sh-close" onclick="closeSheet('cfgSheet')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    <span class="sh-title">设置</span><span style="width:30px"></span>
+  
+  <!-- APP -->
+  <div class="app">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <div class="user-name">琦琦 & Doux</div>
+        <div class="user-sub">在一起 92 天</div>
+      </div>
+      <div class="sidebar-nav">
+        <div class="sb-sep">主要</div>
+        <button class="sb-item active" data-page="chat">💬 聊天</button>
+        <button class="sb-item" data-page="todo">✅ 待办</button>
+        <button class="sb-item" data-page="calendar">📅 日历</button>
+        <button class="sb-item" data-page="diary">📔 日记</button>
+        <div class="sb-sep">共享</div>
+        <button class="sb-item" data-page="moments">🌟 朋友圈</button>
+        <button class="sb-item" data-page="reading">📚 共读</button>
+        <button class="sb-item" data-page="daily">📰 日报</button>
+        <div class="sb-sep">数据</div>
+        <button class="sb-item" data-page="health">💪 健康</button>
+        <button class="sb-item" data-page="status">📊 状态</button>
+        <div class="sb-sep">系统</div>
+        <button class="sb-item" data-page="workflow">⚙️ 工作流</button>
+        <button class="sb-item" data-page="repo">📦 仓库</button>
+        <button class="sb-item" data-page="mcp">🔌 MCP</button>
+      </div>
+      <div class="sb-bottom">
+        <img class="sb-user" id="sidebarAvatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Doux" alt="Avatar">
+      </div>
+    </div>
+    
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+      <div class="hdr">
+        <button class="hdr-btn" id="menuBtn">
+          <svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        </button>
+        <div class="hdr-title" id="pageTitle">聊天</div>
+        <button class="hdr-btn" id="settingsBtn">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m-8-7h6m6 0h6"/></svg>
+        </button>
+      </div>
+      
+      <div id="pageContainer" style="flex:1;overflow:hidden;position:relative">
+        <!-- Chat Page -->
+        <div class="page active" id="page-chat">
+          <div class="chat-area" id="chatArea"></div>
+          <div class="chat-bottom">
+            <textarea class="chat-input" id="chatInput" placeholder="输入消息..." rows="1"></textarea>
+            <button class="chat-send" id="chatSend">
+              <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Other Pages Placeholder -->
+        <div class="page" id="page-todo"><div style="padding:20px">待办功能开发中...</div></div>
+        <div class="page" id="page-calendar"><div style="padding:20px">日历功能开发中...</div></div>
+        <div class="page" id="page-diary"><div style="padding:20px">日记功能开发中...</div></div>
+        <div class="page" id="page-moments"><div style="padding:20px">朋友圈功能开发中...</div></div>
+        <div class="page" id="page-reading"><div style="padding:20px">共读功能开发中...</div></div>
+        <div class="page" id="page-daily"><div style="padding:20px">日报功能开发中...</div></div>
+        <div class="page" id="page-health"><div style="padding:20px">健康功能开发中...</div></div>
+        <div class="page" id="page-status"><div style="padding:20px">状态功能开发中...</div></div>
+        <div class="page" id="page-workflow"><div style="padding:20px">工作流功能开发中...</div></div>
+        <div class="page" id="page-repo"><div style="padding:20px">仓库功能开发中...</div></div>
+        <div class="page" id="page-mcp" data-mcp-page></div>
+      </div>
+    </div>
   </div>
-  <div class="sh-body">
-    <div class="cfg-group">
-      <label class="cfg-label" for="cfgProvider">提供商</label>
-      <select class="cfg-input" id="cfgProvider" onchange="onProviderChange()">
-        <option value="openai">OpenAI 兼容</option>
-        <option value="anthropic">Anthropic</option>
-      </select>
+  
+  <!-- Avatar Picker -->
+  <div class="avatar-picker" id="avatarPicker">
+    <div class="avatar-panel">
+      <h3 style="margin-bottom:4px" id="avatarPickerTitle">选择头像</h3>
+      <div class="hdr-subtitle">点击选择新头像</div>
+      <div class="avatar-grid" id="avatarGrid"></div>
     </div>
-    <div class="cfg-group">
-      <label class="cfg-label" for="cfgUrl">API Base URL</label>
-      <input class="cfg-input" id="cfgUrl" placeholder="https://api.openai.com/v1" autocomplete="off">
-      <div class="cfg-hint">中转站填你自己的地址</div>
-    </div>
-    <div class="cfg-group">
-      <label class="cfg-label" for="cfgKey">API Key</label>
-      <input class="cfg-input" id="cfgKey" type="password" placeholder="sk-..." autocomplete="off">
-    </div>
-    <div class="cfg-group">
-      <label class="cfg-label" for="cfgModels">模型列表（逗号分隔）</label>
-      <input class="cfg-input" id="cfgModels" placeholder="gpt-4o, claude-sonnet-4-20250514">
-      <div class="cfg-hint">填你中转站支持的模型</div>
-    </div>
-    <div class="cfg-model-select" id="cfgModelSelect" style="display:none">
-      <label for="cfgActiveModel">当前使用模型</label>
-      <select id="cfgActiveModel"></select>
-    </div>
-    <div class="cfg-group" style="margin-top:16px">
-      <label class="cfg-label" for="cfgSys">系统提示词</label>
-      <textarea class="cfg-input" id="cfgSys" rows="4" placeholder="你是一个有用的AI助手..."></textarea>
-    </div>
-    <div class="cfg-group">
-      <label class="cfg-label" for="cfgName">AI 显示名</label>
-      <input class="cfg-input" id="cfgName" placeholder="Doux" value="Doux">
-    </div>
-    <button class="cfg-btn" onclick="saveConfig()">保存</button>
   </div>
-</div>
-
-<div class="lock" id="lock">
-  <div class="lock-time" id="lockTime">14:17</div>
-  <div class="lock-date" id="lockDate"></div>
-  <div class="lock-art"><svg viewBox="0 0 200 200" fill="none"><circle cx="105" cy="62" r="18" fill="var(--accent-soft)" opacity=".9"/><path d="M60 140C60 140 55 120 70 105 85 90 75 80 80 70 85 60 95 65 100 60 105 55 100 48 105 45 110 42 118 50 115 58 112 66 120 65 125 72 130 79 122 85 118 90 114 95 120 100 125 105 130 110 140 108 145 115 150 122 140 130 135 135" stroke="var(--text)" stroke-width="3.5" stroke-linecap="round"/><path d="M135 135C130 145 125 160 130 175 135 190 115 195 105 180 95 165 90 155 85 150 80 145 70 148 60 140" stroke="var(--text)" stroke-width="3.5" stroke-linecap="round"/></svg></div>
-  <div class="lock-msg">You're home</div>
-  <div class="slider" id="slider">
-    <div class="slider-thumb" id="sliderThumb"><svg viewBox="0 0 24 24" fill="none"><polyline points="9,18 15,12 9,6" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-    <span class="slider-label">slide to unlock</span>
-  </div>
-</div>
-
-<input type="file" id="avatarPicker" accept="image/*" style="display:none">
-
-<script>
-const S={provider:localStorage.getItem('d_prov')||'openai',url:localStorage.getItem('d_url')||'',key:localStorage.getItem('d_key')||'',models:(localStorage.getItem('d_models')||'').split(',').filter(Boolean),model:localStorage.getItem('d_model')||'',sysPrompt:localStorage.getItem('d_sys')||'',aiName:localStorage.getItem('d_name')||'Doux',messages:[],streaming:false,aiAvatar:localStorage.getItem('d_aiAv')||'',userAvatar:localStorage.getItem('d_userAv')||''};
-
-const sb=document.getElementById('sb'),sbOv=document.getElementById('sbOv');
-function toggleSb(){sb.classList.toggle('on');sbOv.classList.toggle('on')}
-sbOv.onclick=toggleSb;
-document.querySelectorAll('.sb-item[data-page]').forEach(b=>{b.onclick=()=>{document.querySelectorAll('.sb-item').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('pg-'+b.dataset.page).classList.add('active');if(innerWidth<900)toggleSb()}});
-
-function openSheet(id){document.getElementById(id).classList.add('on');document.getElementById(id.replace('Sheet','Bg')).classList.add('on')}
-function closeSheet(id){document.getElementById(id).classList.remove('on');document.getElementById(id.replace('Sheet','Bg')).classList.remove('on')}
-
-function loadConfigUI(){document.getElementById('cfgProvider').value=S.provider;document.getElementById('cfgUrl').value=S.url;document.getElementById('cfgKey').value=S.key;document.getElementById('cfgModels').value=S.models.join(', ');document.getElementById('cfgSys').value=S.sysPrompt;document.getElementById('cfgName').value=S.aiName;onProviderChange();updateModelSelect()}
-function onProviderChange(){const p=document.getElementById('cfgProvider').value;document.getElementById('cfgUrl').placeholder=p==='anthropic'?'https://api.anthropic.com':'https://api.openai.com/v1'}
-function updateModelSelect(){const sel=document.getElementById('cfgActiveModel'),wrap=document.getElementById('cfgModelSelect');if(!S.models.length){wrap.style.display='none';return}wrap.style.display='block';sel.innerHTML=S.models.map(m=>`<option value="${esc(m)}"${m===S.model?' selected':''}>${esc(m)}</option>`).join('')}
-function saveConfig(){S.provider=document.getElementById('cfgProvider').value;S.url=document.getElementById('cfgUrl').value.replace(/\/+$/,'');S.key=document.getElementById('cfgKey').value.trim();S.models=document.getElementById('cfgModels').value.split(',').map(s=>s.trim()).filter(Boolean);S.sysPrompt=document.getElementById('cfgSys').value;S.aiName=document.getElementById('cfgName').value||'Doux';const activeSel=document.getElementById('cfgActiveModel');if(activeSel.value)S.model=activeSel.value;else if(S.models.length)S.model=S.models[0];['d_prov','d_url','d_key','d_models','d_sys','d_name','d_model'].forEach(k=>localStorage.removeItem(k));localStorage.setItem('d_prov',S.provider);localStorage.setItem('d_url',S.url);localStorage.setItem('d_key',S.key);localStorage.setItem('d_models',S.models.join(','));localStorage.setItem('d_sys',S.sysPrompt);localStorage.setItem('d_name',S.aiName);localStorage.setItem('d_model',S.model);updateModelSelect();document.getElementById('chatTitle').textContent=S.aiName;closeSheet('cfgSheet')}
-
-let avatarTarget=null;const avatarPicker=document.getElementById('avatarPicker');
-function setAvatarFor(type){avatarTarget=type;avatarPicker.click()}
-avatarPicker.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const d=ev.target.result;if(avatarTarget==='ai'){S.aiAvatar=d;localStorage.setItem('d_aiAv',d)}else{S.userAvatar=d;localStorage.setItem('d_userAv',d)}refreshAllAvatars()};r.readAsDataURL(f);avatarPicker.value=''};
-function refreshAllAvatars(){document.querySelectorAll('.av-ai').forEach(el=>{el.innerHTML=S.aiAvatar?`<img src="${S.aiAvatar}" alt="AI">`:`<span>${S.aiName[0]}</span>`});document.querySelectorAll('.av-user').forEach(el=>{el.innerHTML=S.userAvatar?`<img src="${S.userAvatar}" alt="我">`:`<span>我</span>`});const sbAv=document.getElementById('userAvatarSb');sbAv.innerHTML=S.userAvatar?`<img src="${S.userAvatar}" alt="我">`:`<span>我</span>`}
-document.getElementById('userAvatarWrap').onclick=()=>setAvatarFor('user');
-
-const chatArea=document.getElementById('chatArea'),inputField=document.getElementById('inputField'),sendBtn=document.getElementById('sendBtn');
-inputField.addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px';sendBtn.disabled=!this.value.trim()});
-inputField.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();sendMsg()}});
-
-function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
-
-function addMsg(role,html){const row=document.createElement('div');row.className='msg '+(role==='user'?'user':'ai');const av=document.createElement('div');av.className='msg-avatar '+(role==='user'?'av-user':'av-ai');if(role==='ai'){av.innerHTML=S.aiAvatar?`<img src="${S.aiAvatar}" alt="AI">`:`<span>${S.aiName[0]}</span>`;av.onclick=()=>setAvatarFor('ai')}else{av.innerHTML=S.userAvatar?`<img src="${S.userAvatar}" alt="我">`:`<span>我</span>`;av.onclick=()=>setAvatarFor('user')}av.style.cursor='pointer';const content=document.createElement('div');content.className='msg-content';const bubble=document.createElement('div');bubble.className='msg-bubble';bubble.innerHTML=html;content.appendChild(bubble);if(role==='user'){row.appendChild(content);row.appendChild(av)}else{row.appendChild(av);row.appendChild(content)}chatArea.appendChild(row);chatArea.scrollTop=chatArea.scrollHeight;return bubble}
-
-addMsg('ai','点右上角 ⚙ 配置API就能聊了。');
-
-async function sendMsg(){const text=inputField.value.trim();if(!text||S.streaming)return;if(!S.key||!S.url){openSheet('cfgSheet');return}if(!S.model&&S.models.length)S.model=S.models[0];if(!S.model){openSheet('cfgSheet');return}inputField.value='';inputField.style.height='auto';sendBtn.disabled=true;addMsg('user',esc(text));S.messages.push({role:'user',content:text});S.streaming=true;const bubble=addMsg('ai','');bubble.classList.add('streaming');try{if(S.provider==='anthropic')await streamAnthropic(bubble);else await streamOpenAI(bubble)}catch(err){bubble.innerHTML='⚠️ '+esc(err.message)}bubble.classList.remove('streaming');S.streaming=false;chatArea.scrollTop=chatArea.scrollHeight}
-
-async function streamOpenAI(bubble){const body={model:S.model,messages:S.sysPrompt?[{role:'system',content:S.sysPrompt},...S.messages]:[...S.messages],stream:true};const res=await fetch(S.url+'/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.key},body:JSON.stringify(body)});if(!res.ok)throw new Error(`${res.status} ${(await res.text().catch(()=>'')).slice(0,200)}`);const reader=res.body.getReader(),dec=new TextDecoder();let full='',think='',buf='';while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop();for(const line of lines){const d=line.replace(/^data: /,'').trim();if(!d||d==='[DONE]')continue;try{const j=JSON.parse(d),c=j.choices?.[0]?.delta?.content;if(c){full+=c;renderMd(bubble,full,think)}const t=j.choices?.[0]?.delta?.reasoning_content||j.choices?.[0]?.delta?.thinking;if(t)think+=t}catch{}}}S.messages.push({role:'assistant',content:full});if(think)prependThought(bubble,think)}
-
-async function streamAnthropic(bubble){const body={model:S.model,max_tokens:8192,messages:[...S.messages],stream:true};if(S.sysPrompt)body.system=S.sysPrompt;const res=await fetch(S.url+'/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':S.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(body)});if(!res.ok)throw new Error(`${res.status} ${(await res.text().catch(()=>'')).slice(0,200)}`);const reader=res.body.getReader(),dec=new TextDecoder();let full='',think='',buf='';while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop();for(const line of lines){if(!line.startsWith('data: '))continue;const d=line.slice(6).trim();if(!d)continue;try{const ev=JSON.parse(d);if(ev.type==='content_block_delta'){if(ev.delta?.type==='text_delta'){full+=ev.delta.text;renderMd(bubble,full,think);chatArea.scrollTop=chatArea.scrollHeight}if(ev.delta?.type==='thinking_delta')think+=ev.delta.thinking}}catch{}}}S.messages.push({role:'assistant',content:full});if(think)prependThought(bubble,think)}
-
-function prependThought(bubble,text){const wrap=document.createElement('div');wrap.style.marginBottom='6px';const btn=document.createElement('button');btn.className='thought-toggle';btn.innerHTML=`<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,18 15,12 9,6"/></svg> Thought process`;const body=document.createElement('div');body.className='thought-body';body.textContent=text;btn.onclick=()=>{body.classList.toggle('open');btn.classList.toggle('open')};wrap.appendChild(btn);wrap.appendChild(body);bubble.insertBefore(wrap,bubble.firstChild)}
-
-function renderMd(el,text){let h=esc(text);h=h.replace(/```(\w*)\n([\s\S]*?)```/g,'<pre style="background:var(--bg);padding:10px;border-radius:8px;overflow-x:auto;font-size:13px;margin:6px 0"><code>$2</code></pre>');h=h.replace(/`([^`]+)`/g,'<code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:13px">$1</code>');h=h.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');h=h.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g,'<em>$1</em>');h=h.replace(/\n/g,'<br>');const existing=el.querySelector('.thought-toggle')?.parentElement;el.innerHTML=h;if(existing)el.insertBefore(existing,el.firstChild)}
-
-function updateClock(){const n=new Date();document.getElementById('lockTime').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');const ds=['周日','周一','周二','周三','周四','周五','周六'];document.getElementById('lockDate').textContent=`${n.getMonth()+1}月${n.getDate()}日 ${ds[n.getDay()]}`}
-updateClock();setInterval(updateClock,15000);
-
-const lock=document.getElementById('lock'),slT=document.getElementById('sliderThumb');let dragging=false,dragX=0,thumbX=0;const maxSl=200;
-function ds(e){dragging=true;dragX=(e.touches?e.touches[0].clientX:e.clientX)-thumbX;slT.style.transition='none'}
-function dm(e){if(!dragging)return;e.preventDefault();thumbX=Math.max(0,Math.min((e.touches?e.touches[0].clientX:e.clientX)-dragX,maxSl));slT.style.transform=`translateX(${thumbX}px)`}
-function de(){if(!dragging)return;dragging=false;slT.style.transition='transform .3s cubic-bezier(.32,.72,0,1)';if(thumbX>maxSl*.65){slT.style.transform=`translateX(${maxSl}px)`;setTimeout(()=>lock.classList.add('gone'),150)}else{thumbX=0;slT.style.transform='translateX(0)'}}
-slT.addEventListener('mousedown',ds);slT.addEventListener('touchstart',ds,{passive:true});document.addEventListener('mousemove',dm);document.addEventListener('touchmove',dm,{passive:false});document.addEventListener('mouseup',de);document.addEventListener('touchend',de);
-
-loadConfigUI();document.getElementById('chatTitle').textContent=S.aiName;refreshAllAvatars();
-</script>
+  
+  <script type="module">
+    import { renderMCPPage } from './src/mcp/MCPPage.js';
+    
+    // Lock Screen
+    const lock = document.getElementById('lock');
+    const lockTime = document.getElementById('lockTime');
+    const lockDate = document.getElementById('lockDate');
+    const lockSlider = document.getElementById('lockSlider');
+    const lockHandle = document.getElementById('lockHandle');
+    const lockTrack = document.getElementById('lockTrack');
+    
+    function updateLockTime() {
+      const now = new Date();
+      lockTime.textContent = now.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+      const weekdays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+      lockDate.textContent = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${weekdays[now.getDay()]}`;
+    }
+    updateLockTime();
+    setInterval(updateLockTime, 1000);
+    
+    let startX = 0, currentX = 0;
+    const maxSlide = lockSlider.offsetWidth - lockHandle.offsetWidth - 8;
+    
+    lockHandle.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      currentX = 0;
+    });
+    
+    lockHandle.addEventListener('touchmove', (e) => {
+      const touch = e.touches[0];
+      currentX = Math.max(0, Math.min(maxSlide, touch.clientX - startX));
+      lockHandle.style.left = `${4 + currentX}px`;
+      lockTrack.style.width = `${currentX}px`;
+    });
+    
+    lockHandle.addEventListener('touchend', () => {
+      if (currentX > maxSlide * 0.8) {
+        lock.classList.add('hidden');
+      } else {
+        lockHandle.style.left = '4px';
+        lockTrack.style.width = '0';
+      }
+    });
+    
+    // Sidebar
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const menuBtn = document.getElementById('menuBtn');
+    
+    menuBtn.addEventListener('click', () => {
+      sidebar.classList.add('active');
+      sidebarOverlay.classList.add('active');
+    });
+    
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('active');
+      sidebarOverlay.classList.remove('active');
+    });
+    
+    // Page Navigation
+    const sbItems = document.querySelectorAll('.sb-item');
+    const pages = document.querySelectorAll('.page');
+    const pageTitle = document.getElementById('pageTitle');
+    
+    sbItems.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pageName = btn.dataset.page;
+        sbItems.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        pages.forEach(p => p.classList.remove('active'));
+        const targetPage = document.getElementById(`page-${pageName}`);
+        targetPage.classList.add('active');
+        pageTitle.textContent = btn.textContent.trim().slice(2);
+        sidebar.classList.remove('active');
+        sidebarOverlay.classList.remove('active');
+        
+        // Render MCP page if navigating to it
+        if (pageName === 'mcp') {
+          renderMCPPage();
+        }
+      });
+    });
+    
+    // Chat
+    const chatArea = document.getElementById('chatArea');
+    const chatInput = document.getElementById('chatInput');
+    const chatSend = document.getElementById('chatSend');
+    
+    let userAvatar = localStorage.getItem('userAvatar') || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Kylie';
+    let aiAvatar = localStorage.getItem('aiAvatar') || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Doux';
+    
+    function addMessage(role, content) {
+      const msg = document.createElement('div');
+      msg.className = `chat-msg ${role}`;
+      const avatar = document.createElement('img');
+      avatar.className = 'chat-avatar';
+      avatar.src = role === 'user' ? userAvatar : aiAvatar;
+      avatar.dataset.role = role;
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-bubble';
+      bubble.innerHTML = content;
+      msg.appendChild(avatar);
+      msg.appendChild(bubble);
+      chatArea.appendChild(msg);
+      chatArea.scrollTop = chatArea.scrollHeight;
+      return bubble;
+    }
+    
+    async function sendMessage() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+      addMessage('user', text);
+      chatInput.value = '';
+      const aiBubble = addMessage('assistant', '<span class="typing-cursor"></span>');
+      setTimeout(() => {
+        aiBubble.innerHTML = '收到！MCP 功能已接入，现在可以在 MCP 页面配置服务器了～';
+      }, 800);
+    }
+    
+    chatSend.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+    
+    // Avatar Picker
+    const avatarPicker = document.getElementById('avatarPicker');
+    const avatarGrid = document.getElementById('avatarGrid');
+    const avatarPickerTitle = document.getElementById('avatarPickerTitle');
+    let pickingFor = null;
+    
+    const seeds = ['Doux','Kylie','Luna','Max','Alex','Sam','Riley','Jordan'];
+    seeds.forEach(seed => {
+      const img = document.createElement('img');
+      img.className = 'avatar-option';
+      img.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+      img.addEventListener('click', () => {
+        if (pickingFor === 'user') {
+          userAvatar = img.src;
+          localStorage.setItem('userAvatar', userAvatar);
+        } else {
+          aiAvatar = img.src;
+          localStorage.setItem('aiAvatar', aiAvatar);
+        }
+        document.querySelectorAll(`.chat-avatar[data-role="${pickingFor}"]`).forEach(av => av.src = img.src);
+        document.getElementById('sidebarAvatar').src = aiAvatar;
+        avatarPicker.classList.remove('show');
+      });
+      avatarGrid.appendChild(img);
+    });
+    
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('chat-avatar')) {
+        pickingFor = e.target.dataset.role;
+        avatarPickerTitle.textContent = pickingFor === 'user' ? '选择你的头像' : '选择 Doux 的头像';
+        avatarPicker.classList.add('show');
+      }
+    });
+    
+    avatarPicker.addEventListener('click', (e) => {
+      if (e.target === avatarPicker) avatarPicker.classList.remove('show');
+    });
+    
+    document.getElementById('sidebarAvatar').src = aiAvatar;
+  </script>
 </body>
 </html>
